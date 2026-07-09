@@ -128,3 +128,4 @@ async def _start_embedded_worker() -> None:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+app.get('/test-alarm')
