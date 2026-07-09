@@ -39,7 +39,7 @@ variable "ecs_task_role_arn" {
 }
 
 variable "rds_address" {
-  description = "RDS address"
+  description = "RDS PostgreSQL address"
   type        = string
 }
 

@@ -126,6 +126,7 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private[count.index].id
 }
 
+
 # SECURITY GROUPS
 resource "aws_security_group" "alb" {
   name        = "mitsumi-alb-sg-${var.environment}"
