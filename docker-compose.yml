@@ -1,51 +1,372 @@
+version: '3.8'
+
+# Networks
+networks:
+  mitsumi-network:
+    driver: bridge
+    name: mitsumi-network
+
+volumes:
+  postgres_data:
+    name: mitsumi-postgres-data
+  redis_data:
+    name: mitsumi-redis-data
+  mongo_data:
+    name: mitsumi-mongo-data
+  mysql_data:
+    name: mitsumi-mysql-data
+  backend_logs:
+    name: mitsumi-backend-logs
+  pgadmin_data:
+    name: mitsumi-pgadmin-data
+  redis_insight_data:
+    name: mitsumi-redis-insight-data
+
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: mitsumi-postgres
+    restart: unless-stopped
+    
     environment:
-      VITE_API_BASE: http://localhost:8000/api
-      VITE_WS_BASE: ws://localhost:8000
-      VITE_DEV_AUTO_LOGIN: "true"
-      VITE_DEV_AUTO_LOGIN_EMAIL: ${VITE_DEV_AUTO_LOGIN_EMAIL:-dev@example.com}
-      VITE_DEV_AUTO_LOGIN_PASSWORD: ${VITE_DEV_AUTO_LOGIN_PASSWORD:-}
-    depends_on:
-      - api
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-mitsumi_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    networks:
+      - mitsumi-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-2G}
+          cpus: ${POSTGRES_CPU_LIMIT:-1.5}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-50m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  redis:
+    image: redis:7-alpine
+    container_name: mitsumi-redis
+    restart: unless-stopped
+    
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    
+    volumes:
+      - redis_data:/data
+    
+    networks:
+      - mitsumi-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-512M}
+          cpus: ${REDIS_CPU_LIMIT:-0.8}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-20m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+
+  mongodb:
+    image: mongo:6
+    container_name: mitsumi-mongodb
+    restart: unless-stopped
+    
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-mitsumi_agent}
+    
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    
+    volumes:
+      - mongo_data:/data/db
+    
+    networks:
+      - mitsumi-network
+    
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          memory: ${MONGO_MEMORY_LIMIT:-1G}
+          cpus: ${MONGO_CPU_LIMIT:-1.0}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-50m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  mysql:
+    image: mysql:8
+    container_name: mitsumi-mysql
+    restart: unless-stopped
+    
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-crm_db}
+      MYSQL_USER: ${MYSQL_USER:-crm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-crm_password}
+    
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    
+    volumes:
+      - mysql_data:/var/lib/mysql
+    
+    networks:
+      - mitsumi-network
+    
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_connections=200
+    
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          memory: ${MYSQL_MEMORY_LIMIT:-1G}
+          cpus: ${MYSQL_CPU_LIMIT:-1.0}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-50m}"
+        max-file: "${LOG_MAX_FILE:-5}"
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    
+    container_name: mitsumi-api
+    restart: unless-stopped
+    
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-true}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - DB_NAME=${POSTGRES_DB:-mitsumi_db}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_USER=${MONGO_USER:-admin}
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-password}
+      - MONGO_DB=${MONGO_DB:-mitsumi_agent}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER:-crm_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-crm_password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-crm_db}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - AWS_REGION=${AWS_REGION:-us-west-2}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-10}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-20}
+      - DB_POOL_TIMEOUT=${DB_POOL_TIMEOUT:-30}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      - ENABLE_CACHE=${ENABLE_CACHE:-true}
+      - ENABLE_ASYNC_PROCESSING=${ENABLE_ASYNC_PROCESSING:-true}
+      - ENABLE_WEBSOCKETS=${ENABLE_WEBSOCKETS:-true}
+      - MAX_CONCURRENT_LLM_CALLS=${MAX_CONCURRENT_LLM_CALLS:-5}
+    
     ports:
-      - "8000:8000"
-    env_file:
-      - .env
+      - "${API_PORT:-8000}:8000"
+    
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       mongodb:
-        condition: service_started
-
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-      POSTGRES_DB: ${POSTGRES_DB:-mitsumi}
-    ports:
-      - "5432:5432"
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    
+    networks:
+      - mitsumi-network
+    
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mitsumi"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-30s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-40s}
+    
+    deploy:
+      resources:
+        limits:
+          memory: ${API_MEMORY_LIMIT:-2G}
+          cpus: ${API_CPU_LIMIT:-2.0}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-100m}"
+        max-file: "${LOG_MAX_FILE:-5}"
 
-  redis:
-    image: redis:7-alpine
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mitsumi-pgadmin
+    restart: unless-stopped
+    profiles: ["dev", "tools"]
+    
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@mitsumi.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    
     ports:
-      - "6379:6379"
+      - "${PGADMIN_PORT:-5050}:80"
+    
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    
+    networks:
+      - mitsumi-network
+    depends_on:
+      - postgres
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  mongodb:
-    image: mongo:7
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: mitsumi-redis-insight
+    restart: unless-stopped
+    profiles: ["dev", "tools"]
+    
     ports:
-      - "27017:27017"
+      - "${REDIS_INSIGHT_PORT:-5540}:5540"
+    
+    volumes:
+      - redis_insight_data:/db
+    
+    networks:
+      - mitsumi-network
+    depends_on:
+      - redis
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mitsumi-mongo-express
+    restart: unless-stopped
+    profiles: ["dev", "tools"]
+    
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-password}
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    
+    ports:
+      - "${MONGO_EXPRESS_PORT:-8081}:8081"
+    
+    networks:
+      - mitsumi-network
+    depends_on:
+      - mongodb
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: mitsumi-phpmyadmin
+    restart: unless-stopped
+    profiles: ["dev", "tools"]
+    
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 100M
+    
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    
+    networks:
+      - mitsumi-network
+    depends_on:
+      - mysql
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+
+
