@@ -1,0 +1,278 @@
+  """
+Centralized secrets management with AWS Secrets Manager
+"""
+import boto3
+import json
+from typing import Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
+class SecretsManager:
+    """Manages secrets using AWS Secrets Manager with caching"""
+    
+    def __init__(self, region: str = None):
+        #  CHANGE 1: Initialize AWS client instead of reading from .env
+        # OLD: Just read from environment variables
+        # NEW: Connect to AWS Secrets Manager
+        
+        # If no region specified, use environment or default
+        self.region = region or os.getenv('AWS_REGION', 'us-east-1')
+        
+        # Initialize the AWS client - this authenticates via IAM role
+        self.client = boto3.client('secretsmanager', region_name=self.region)
+        
+        #  CHANGE 2: Add caching to reduce AWS API call
+        # NEW: Cache secrets after first fetch
+        self.cache = {}  # In-memory cache
+        
+        #  CHANGE 3: Track when the secret was last rotated
+        self.last_rotation = {}
+        
+        #  CHANGE 4: Flag to know if we're in production
+        self.is_production = os.getenv('ENVIRONMENT') == 'production'
+        
+        logger.info(f"SecretsManager initialized for region: {self.region}")
+    
+    def get_secret(self, secret_name: str) -> Dict[str, Any]:
+        """
+        Get secret with caching
+        Why cache: AWS Secrets Manager costs $0.05 per 10,000 API calls
+        """
+        # CHANGE 5: Return cached value if available
+        # OLD: No caching, would read from env every time
+        # NEW: Check cache first
+        if secret_name in self.cache:
+            logger.debug(f"Cache hit for secret: {secret_name}")
+            return self.cache[secret_name]
+        
+        try:
+            #  CHANGE 6: Fetch from AWS instead of reading from .env
+            # OLD: secret = os.getenv('DB_PASSWORD')
+            # NEW: Fetch from AWS Secrets Manager
+            logger.info(f"Fetching secret from AWS: {secret_name}")
+            response = self.client.get_secret_value(SecretId=secret_name)
+            
+            #  CHANGE 7: Parse the secret value
+            # OLD: Just a simple string
+            # NEW: JSON formatted secret with multiple values
+            if 'SecretString' in response:
+                secret = json.loads(response['SecretString'])
+            else:
+                # Handle binary secrets (rare, but possible)
+                secret = json.loads(response['SecretBinary'].decode('utf-8'))
+            
+            # CHANGE 8: Store in cache for future requests
+            self.cache[secret_name] = secret
+            
+            #  CHANGE 9: Track last access time for rotation
+            self.last_rotation[secret_name] = response.get('CreatedDate')
+            
+            logger.info(f"Successfully retrieved secret: {secret_name}")
+            return secret
+            
+        except self.client.exceptions.ResourceNotFoundException:
+            #  CHANGE 10: Fallback for local development
+            # OLD: Only used environment variables
+            # NEW: Try environment if AWS secret doesn't exist (for local dev)
+            logger.warning(f"Secret {secret_name} not found in AWS, checking environment")
+            
+            # Map AWS secret names to environment variables
+            mapping = {
+                'prod/database': {
+                    'host': os.getenv('DB_HOST', 'localhost'),
+                    'port': int(os.getenv('DB_PORT', 5432)),
+                    'username': os.getenv('DB_USER', 'postgres'),
+                    'password': os.getenv('DB_PASSWORD'),
+                    'database': os.getenv('DB_NAME', 'mitsumi_db')
+                },
+                'prod/redis': {
+                    'host': os.getenv('REDIS_HOST', 'localhost'),
+                    'port': int(os.getenv('REDIS_PORT', 6379)),
+                    'password': os.getenv('REDIS_PASSWORD')
+                },
+                'prod/llm-keys': {
+                    'openai': os.getenv('OPENAI_API_KEY'),
+                    'anthropic': os.getenv('ANTHROPIC_API_KEY')
+                },
+                'prod/jwt': {
+                    'secret': os.getenv('JWT_SECRET_KEY')
+                }
+            }
+            
+            if secret_name in mapping:
+                secret = mapping[secret_name]
+                # Cache the environment fallback too
+                self.cache[secret_name] = secret
+                return secret
+            
+            raise
+            
+        except Exception as e:
+            logger.error(f"Failed to retrieve secret {secret_name}: {e}")
+            raise
+    
+    def rotate_secret(self, secret_name: str, new_secret: Dict[str, Any]):
+        """
+        Rotate secret with test-first approach
+        Why: Ensures new credentials work before switching over
+        """
+        try:
+            #  CHANGE 11: Create new version BEFORE making it active
+            # OLD: Would need to manually update and restart containers
+            # NEW: AWS Secrets Manager handles versioning
+            
+            logger.info(f"Rotating secret: {secret_name}")
+            
+            # Step 1: Create new version marked as pending
+            response = self.client.put_secret_value(
+                SecretId=secret_name,
+                SecretString=json.dumps(new_secret),
+                VersionStages=['AWSPENDING']  # Mark as pending, not active
+            )
+            
+            logger.info(f"New secret version created: {response['VersionId']}")
+            
+            # Step 2: Test new credentials (CRITICAL!)
+            #  CHANGE 12: Test BEFORE switching
+            # OLD: New credentials might not work, causing outage
+            # NEW: Test first, switch only if successful
+            
+            try:
+                self._test_secret(secret_name, new_secret)
+                logger.info("New credentials tested successfully")
+            except Exception as e:
+                logger.error(f"Credential test failed: {e}")
+                #  CHANGE 13: Rollback if test fails
+                self.client.update_secret_version_stage(
+                    SecretId=secret_name,
+                    VersionStage='AWSPENDING',
+                    RemoveFromVersionId=response['VersionId']
+                )
+                raise
+            
+            # Step 3: Make them active
+            # CHANGE 14: Atomic switchover
+            # OLD: Service would be down during manual switch
+            # NEW: Instant switch, no downtime
+            
+            self.client.update_secret_version_stage(
+                SecretId=secret_name,
+                VersionStage='AWSCURRENT',
+                MoveToVersionId=response['VersionId']
+            )
+            
+            # Step 4: Clear cache so app fetches new secrets
+            #  CHANGE 15: Invalidate cache
+            self.cache.clear()
+            self.last_rotation[secret_name] = datetime.now()
+            
+            logger.info(f"Secret {secret_name} rotated successfully")
+            
+        except Exception as e:
+            logger.error(f"Secret rotation failed for {secret_name}: {e}")
+            raise
+    
+    def _test_secret(self, secret_name: str, secret: Dict[str, Any]):
+        """Test rotated credentials before making them active"""
+        
+        #  CHANGE 16: Different test for different secret types
+        # OLD: Couldn't test, just hoped it worked
+        # NEW: Actually test the connection
+        
+        if 'database' in secret_name:
+            self._test_database_connection(secret)
+        elif 'redis' in secret_name:
+            self._test_redis_connection(secret)
+        elif 'llm' in secret_name:
+            self._test_llm_keys(secret)
+        elif 'jwt' in secret_name:
+            # JWT secrets don't need testing
+            pass
+    
+    def _test_database_connection(self, secret: Dict[str, Any]):
+        """Test PostgreSQL connection with new credentials"""
+        import asyncpg
+        
+        async def test():
+            try:
+                conn = await asyncpg.connect(
+                    host=secret['host'],
+                    port=secret.get('port', 5432),
+                    user=secret['username'],
+                    password=secret['password'],
+                    database=secret['database'],
+                    timeout=5  # 5 second timeout
+                )
+                await conn.execute('SELECT 1')
+                await conn.close()
+                logger.info("Database connection test passed")
+            except Exception as e:
+                logger.error(f"Database test failed: {e}")
+                raise
+        
+        asyncio.run(test())
+    
+    def _test_redis_connection(self, secret: Dict[str, Any]):
+        """Test Redis connection with new credentials"""
+        import redis
+        
+        try:
+            r = redis.Redis(
+                host=secret['host'],
+                port=secret.get('port', 6379),
+                password=secret.get('password'),
+                decode_responses=True,
+                socket_timeout=5
+            )
+            r.ping()
+            r.close()
+            logger.info("Redis connection test passed")
+        except Exception as e:
+            logger.error(f"Redis test failed: {e}")
+            raise
+    
+    def _test_llm_keys(self, secret: Dict[str, Any]):
+        """Test LLM API keys"""
+        # Test OpenAI
+        if secret.get('openai'):
+            import openai
+            try:
+                openai.api_key = secret['openai']
+                # Quick model list call
+                openai.Model.list()
+                logger.info("OpenAI key test passed")
+            except Exception as e:
+                logger.error(f"OpenAI key test failed: {e}")
+                raise
+        
+        # Test Anthropic
+        if secret.get('anthropic'):
+            try:
+                # Simple test call
+                import anthropic
+                client = anthropic.Anthropic(api_key=secret['anthropic'])
+                client.messages.create(
+                    model="claude-3-haiku-20240307",
+                    max_tokens=1,
+                    messages=[{"role": "user", "content": "Hello"}]
+                )
+                logger.info("Anthropic key test passed")
+            except Exception as e:
+                logger.error(f"Anthropic key test failed: {e}")
+                raise
+
+# CHANGE 17: Singleton instance
+# OLD: Created new connection each time
+# NEW: Reuse same instance
+_secret_manager = None
+
+def get_secret_manager():
+    """Get or create singleton SecretsManager instance"""
+    global _secret_manager
+    if _secret_manager is None:
+        _secret_manager = SecretsManager()
+    return _secret_manager
+
+#  CHANGE 18: Make it easy to use in config
+secret_manager = get_secret_manager()
