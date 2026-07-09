@@ -129,3 +129,7 @@ async def _start_embedded_worker() -> None:
 async def health() -> dict:
     return {"status": "ok"}
 app.get('/test-alarm')
+
+@app.get("/test-cicd")
+async def test_cicd():
+    return {"status": "CI/CD is working!", "timestamp": "2026-07-09"}
