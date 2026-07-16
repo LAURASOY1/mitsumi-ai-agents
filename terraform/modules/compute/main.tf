@@ -25,7 +25,6 @@ resource "aws_lb" "main" {
 }
 
 # TARGET GROUP
-
 resource "aws_lb_target_group" "api" {
   name        = "mitsumi-api-tg-${var.environment}"
   port        = 8000
@@ -224,7 +223,6 @@ resource "aws_appautoscaling_policy" "api_cpu" {
 
 
 # CLOUDWATCH LOG GROUP
-
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/ecs/mitsumi-api-${var.environment}"
   retention_in_days = 30
@@ -236,7 +234,6 @@ resource "aws_cloudwatch_log_group" "api" {
 
 
 # OUTPUTS
-
 output "alb_dns_name" {
   value = aws_lb.main.dns_name
 }

@@ -8,8 +8,10 @@ on:
 
 # ENVIRONMENT VARIABLES
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "false"
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: mitsumi-api
+
 
 # JOBS
 jobs:

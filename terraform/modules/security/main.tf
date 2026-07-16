@@ -47,9 +47,7 @@ resource "aws_security_group" "database" {
   }
 }
 
-# ============================================
 # ECS SECURITY GROUP (Referenced by database SG)
-# ============================================
 resource "aws_security_group" "ecs" {
   name        = "mitsumi-ecs-sg-${var.environment}"
   description = "ECS Security Group - Used by database SG"
@@ -67,9 +65,8 @@ resource "aws_security_group" "ecs" {
   }
 }
 
-# ============================================
 # IAM ROLES
-# ============================================
+
 resource "aws_iam_role" "ecs_execution" {
   name = "mitsumi-ecs-execution-${var.environment}"
 
@@ -142,9 +139,8 @@ resource "aws_iam_role_policy_attachment" "secrets" {
   policy_arn = aws_iam_policy.secrets.arn
 }
 
-# ============================================
+
 # OUTPUTS
-# ============================================
 output "database_sg_id" {
   value = aws_security_group.database.id
 }

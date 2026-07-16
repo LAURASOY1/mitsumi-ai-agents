@@ -9,9 +9,7 @@ module "networking" {
   database_subnet_cidrs = var.database_subnet_cidrs
 }
 
-# ============================================
 # MODULE: SECURITY
-# ============================================
 module "security" {
   source = "./modules/security"
 
@@ -19,9 +17,7 @@ module "security" {
   vpc_id        = module.networking.vpc_id
 }
 
-# ============================================
 # MODULE: DATABASES
-# ============================================
 module "databases" {
   source = "./modules/databases"
 
@@ -39,9 +35,7 @@ module "databases" {
   mysql_instance_class  = var.mysql_instance_class
 }
 
-# ============================================
 # MODULE: COMPUTE
-# ============================================
 module "compute" {
   source = "./modules/compute"
 
@@ -56,17 +50,14 @@ module "compute" {
   ecs_execution_role_arn = module.security.ecs_execution_role_arn
   ecs_task_role_arn      = module.security.ecs_task_role_arn
 
-  # ============================================
+
   # DATABASE ADDRESSES (from databases module)
-  # ============================================
   rds_address   = module.databases.rds_address
   redis_address = module.databases.redis_address
   docdb_address = module.databases.docdb_address
   mysql_address = module.databases.mysql_address
 
-  # ============================================
   # SCALING SETTINGS (from variables)
-  # ============================================
   api_desired_count     = var.api_desired_count
   worker_desired_count  = var.worker_desired_count
   api_cpu               = var.api_cpu

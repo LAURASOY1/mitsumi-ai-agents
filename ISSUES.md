@@ -21,6 +21,7 @@ No readiness endpoint validating dependencies.
 No backup documentation.
 No Infrastructure as Code.
 
+
 Low
 Improve README for production deployment.
 Add .dockerignore.
