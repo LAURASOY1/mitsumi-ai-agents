@@ -1,13 +1,18 @@
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY requirements.txt .
+
+# Copy from backend directory
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY alembic ./alembic
-COPY alembic.ini .
+# from backend directory
+COPY backend/app ./app
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini .
 
 EXPOSE 8000
+
+# Development  with reload
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
