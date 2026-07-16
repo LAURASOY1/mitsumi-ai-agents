@@ -31,7 +31,7 @@ jobs:
         run: |
           flake8 backend/ --max-line-length=120 || echo "Fix flake8 errors"
       - name: Lint passed
-        run: echo " Lint passed!"
+        run: echo "Lint passed!"
 
   test:
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests..."
-          echo " All tests passed!"
+          echo "All tests passed!"
 
   build:
     runs-on: ubuntu-latest
@@ -61,15 +61,15 @@ jobs:
       - name: Build Docker image
         id: build
         run: |
-          echo "📦 Building Docker image..."
-          #  FIX: Use backend/ as build context
+          echo " Building Docker image..."
+          # FIX: Use backend/ as build context
           docker build -t mitsumi-api:latest -f backend/Dockerfile backend/
           echo "tag=latest" >> $GITHUB_OUTPUT
 
       - name: Verify image
         run: |
           docker images | grep mitsumi-api
-          echo "Image built successfully!"
+          echo " Image built successfully!"
 
   deploy-staging:
     runs-on: ubuntu-latest
@@ -79,8 +79,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deploy to Staging
         run: |
-          echo "🚀 Deploying to staging environment..."
-          echo " Staging deployment complete!"
+          echo "Deploying to staging environment..."
+          echo "Staging deployment complete!"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -96,8 +96,8 @@ jobs:
           echo "⏳ Waiting for manual approval..."
       - name: Deploy to Production
         run: |
-          echo " Deploying to production..."
-          echo " Production deployment complete!"
+          echo "Deploying to production..."
+          echo "Production deployment complete!"
 
   notify:
     runs-on: ubuntu-latest
@@ -106,5 +106,5 @@ jobs:
     steps:
       - name: Send notification
         run: |
-          echo " Deployment notification sent!"
+          echo "Deployment notification sent!"
           echo "Status: ${{ job.status }}"
