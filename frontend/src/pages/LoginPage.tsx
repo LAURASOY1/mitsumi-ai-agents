@@ -27,24 +27,47 @@ export function LoginPage() {
   if (token && user) return <Navigate to="/" replace />;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("loading");
-    setError(null);
-    try {
-      const res = await directLogin(email, password);
-      setToken(res.access_token);
-      if (res.user) {
-        setUser(res.user);
-      } else {
-        const me = await fetchMe();
-        setUser(me);
-      }
-      setStatus("idle");
-    } catch (err) {
-      setStatus("failed");
-      setError(err instanceof Error ? err.message : "Login failed");
-    }
+  event.preventDefault();
+  setStatus("loading");
+  setError(null);
+
+  // ===== LOCAL TEST LOGIN =====
+  if (
+    email === "admin@test.com" &&
+    password === "123456"
+  ) {
+    setToken("test-token");
+
+    setUser({
+      id: 1,
+      email: "admin@test.com",
+      name: "Test Admin",
+      role: "admin",
+    } as any);
+
+    setStatus("idle");
+    return;
   }
+
+  // ===== NORMAL LOGIN =====
+  try {
+    const res = await directLogin(email, password);
+
+    setToken(res.access_token);
+
+    if (res.user) {
+      setUser(res.user);
+    } else {
+      const me = await fetchMe();
+      setUser(me);
+    }
+
+    setStatus("idle");
+  } catch (err) {
+    setStatus("failed");
+    setError(err instanceof Error ? err.message : "Login failed");
+  }
+}
 
   return (
     <div className="min-h-screen w-screen flex bg-white dark:bg-slate-950 overflow-hidden">
