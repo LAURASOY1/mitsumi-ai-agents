@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Chat notes — per-chat note-taking with timestamps.
 
 Users can save notes on any chat. Notes are displayed in a sidebar tab
 and can be referenced by the agent via the /docs command.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 
@@ -38,7 +40,7 @@ async def create_note(chat_id: str, content: str, user_email: str) -> dict:
     }
 
 
-async def list_notes(chat_id: str) -> list[dict]:
+async def list_notes(chat_id: str) -> List[dict]:
     cursor = mongo_db[COLLECTION].find(
         {"chat_id": chat_id}, {"_id": 0}
     ).sort("created_at", -1).limit(50)

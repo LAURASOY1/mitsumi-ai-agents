@@ -1,12 +1,14 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """ISO 3166-1 alpha-2 country catalog.
 
 Used by the Regions admin UI: when adding a country to a region, admins
 pick from this list so entries stay normalised.
 """
 
-from __future__ import annotations
 
-COUNTRY_CATALOG: list[dict[str, str]] = [
+COUNTRY_CATALOG: List[Dict[str, str]] = [
     {"code": "AE", "name": "United Arab Emirates"},
     {"code": "AF", "name": "Afghanistan"},
     {"code": "AO", "name": "Angola"},
@@ -123,4 +125,4 @@ COUNTRY_CATALOG: list[dict[str, str]] = [
     {"code": "ZW", "name": "Zimbabwe"},
 ]
 
-COUNTRY_INDEX: dict[str, str] = {c["code"]: c["name"] for c in COUNTRY_CATALOG}
+COUNTRY_INDEX: Dict[str, str] = {c["code"]: c["name"] for c in COUNTRY_CATALOG}

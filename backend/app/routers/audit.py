@@ -1,6 +1,8 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Audit log read API. Admin-only."""
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -14,7 +16,7 @@ from app.core.scope import ADMIN_ROLES
 router = APIRouter(prefix="/audit-log", tags=["audit"])
 
 
-def _serialize(doc: dict[str, Any]) -> dict[str, Any]:
+def _serialize(doc: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": str(doc.get("_id")),
         "action": doc.get("action"),
@@ -39,14 +41,14 @@ async def _require_admin(user: dict) -> None:
 
 @router.get("")
 async def list_audit(
-    action: str | None = Query(default=None),
-    actor: str | None = Query(default=None),
+    action: str Optional = Query(default=None),
+    actor: str Optional = Query(default=None),
     limit: int = Query(default=25, ge=1, le=500),
     skip: int = Query(default=0, ge=0),
     user=Depends(get_current_user_full),
 ) -> dict:
     await _require_admin(user)
-    filt: dict[str, Any] = {}
+    filt: Dict[str, Any] = {}
     if action:
         filt["action"] = action
     if actor:

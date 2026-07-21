@@ -1,4 +1,6 @@
-from __future__ import annotations
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel
@@ -13,8 +15,8 @@ chat_service = ChatService()
 
 
 class ChatUpdateRequest(BaseModel):
-    title: str | None = None
-    pinned: bool | None = None
+    title: str Optional = None
+    pinned: bool Optional = None
 
 
 @router.post("/agent/{name}/chats")
@@ -25,7 +27,7 @@ async def create_chat(name: str, user=Depends(get_current_user)) -> dict:
 
 
 @router.get("/agent/{name}/chats")
-async def list_chats(name: str, q: str | None = Query(default=None), user=Depends(get_current_user)) -> list[dict]:
+async def list_chats(name: str, q: str Optional = Query(default=None), user=Depends(get_current_user)) -> List[dict]:
     if name not in AGENT_REGISTRY:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown agent")
     return await chat_service.list_chats(user_id=user["id"], agent_name=name, query=q)

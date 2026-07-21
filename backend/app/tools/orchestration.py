@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Advanced orchestration tools for agents.
 
 schedule_meeting  — Create a meeting/event with attendees and agenda
@@ -5,7 +8,6 @@ data_comparison   — Compare metrics across periods, regions, or products
 task_creator      — Agent can create tasks from within a chat
 """
 
-from __future__ import annotations
 
 import json
 from datetime import datetime, timezone

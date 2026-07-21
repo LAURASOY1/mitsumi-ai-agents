@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Token usage tracking per department and model.
 
 Stores per-call token counts in a `token_usage` MongoDB collection
 and provides aggregation queries for the dashboard.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -41,7 +43,7 @@ async def record_usage(
         pass
 
 
-async def get_usage_summary(days: int = 30) -> dict[str, Any]:
+async def get_usage_summary(days: int = 30) -> Dict[str, Any]:
     """Aggregate token usage by department and model over the last N days."""
     from datetime import timedelta
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)

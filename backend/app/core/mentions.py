@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Detect teammate @mentions inside an assistant reply and notify them.
 
 Rules:
@@ -8,7 +11,6 @@ Rules:
     - Best-effort — any error swallowed so the chat stream is never blocked.
 """
 
-from __future__ import annotations
 
 import logging
 import re
@@ -23,18 +25,18 @@ _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 _HANDLE_RE = re.compile(r"(?:^|\s)@([A-Za-z][A-Za-z0-9_.-]{1,40})")
 
 
-def _extract_candidates(text: str) -> tuple[set[str], set[str]]:
+def _extract_candidates(text: str) -> Tuple[set[str], set[str]]:
     """Return (lowercased emails, lowercased handles)."""
     emails = {m.group(0).lower() for m in _EMAIL_RE.finditer(text)}
     handles = {m.group(1).lower() for m in _HANDLE_RE.finditer(text)}
     return emails, handles
 
 
-async def _resolve_users(emails: set[str], handles: set[str]) -> list[dict]:
+async def _resolve_users(emails: set[str], handles: set[str]) -> List[dict]:
     """Look up known users matching any of the candidates."""
     if not emails and not handles:
         return []
-    filters: list[dict] = []
+    filters: List[dict] = []
     if emails:
         filters.append({"email": {"$in": list(emails)}})
     if handles:
@@ -42,7 +44,7 @@ async def _resolve_users(emails: set[str], handles: set[str]) -> list[dict]:
         handle_regexes = [re.compile(re.escape(h), re.IGNORECASE) for h in handles]
         filters.append({"name": {"$in": [r.pattern for r in handle_regexes]}})
     # Union, de-duplicate on email.
-    seen: dict[str, dict] = {}
+    seen: Dict[str, dict] = {}
     for filt in filters:
         cursor = mongo_db["users"].find(
             filt, {"_id": 0, "email": 1, "name": 1, "modules": 1, "roles": 1, "is_super_admin": 1}
@@ -62,7 +64,7 @@ async def notify_mentions(
     agent_name: str,
     chat_id: str,
     text: str,
-) -> list[str]:
+) -> List[str]:
     """Scan `text` for teammate mentions and drop a notification per unique
     user hit. Returns the list of notified emails (handy for tests).
     """
@@ -71,7 +73,7 @@ async def notify_mentions(
         if not emails and not handles:
             return []
         users = await _resolve_users(emails, handles)
-        notified: list[str] = []
+        notified: List[str] = []
         author_lower = (author_email or "").lower()
         for u in users:
             email = u["email"].lower()

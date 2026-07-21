@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from collections import defaultdict
 
 from fastapi import WebSocket
@@ -5,7 +8,7 @@ from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self) -> None:
-        self._connections: dict[str, set[WebSocket]] = defaultdict(set)
+        self._connections: Dict[str, set[WebSocket]] = defaultdict(set)
 
     async def connect(self, user_id: str, websocket: WebSocket) -> None:
         await websocket.accept()

@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from collections.abc import AsyncIterator
 import logging
 import os
@@ -49,7 +52,7 @@ def _get_bedrock_llm(model_key: str = DEFAULT_MODEL):
     )
 
 
-def get_llm(model_key: str | None = None):
+def get_llm(model_key: str Optional = None):
     if settings.is_bedrock:
         return _get_bedrock_llm(model_key or DEFAULT_MODEL)
     from langchain.chat_models import init_chat_model
@@ -71,7 +74,7 @@ def get_llm(model_key: str | None = None):
     return init_chat_model(model=settings.LLM_MODEL, model_provider=provider, temperature=0)
 
 
-def _build_history_messages(memory: list[dict], summary: str) -> list:
+def _build_history_messages(memory: List[dict], summary: str) -> list:
     """Convert stored memory + summary into LangChain message objects."""
     msgs = []
     if summary:
@@ -116,14 +119,14 @@ TOOL_ROUTING_GUIDE = (
 class BaseAgent:
     name: str = "base"
     system_prompt: str = "You are a helpful assistant."
-    allowed_tools: list[str] = []
-    quick_actions: list[dict] = []
+    allowed_tools: List[str] = []
+    quick_actions: List[dict] = []
 
-    def __init__(self, model_key: str | None = None) -> None:
+    def __init__(self, model_key: str Optional = None) -> None:
         self._model_key = model_key
         self._init_agent(model_key)
 
-    def _init_agent(self, model_key: str | None):
+    def _init_agent(self, model_key: str Optional):
         self.llm = get_llm(model_key)
         tools = [t for t in ALL_TOOLS if t.name in self.allowed_tools] if self.allowed_tools else ALL_TOOLS
         full_prompt = self.system_prompt + TOOL_ROUTING_GUIDE

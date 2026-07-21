@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from app.email.service import send_transactional_email
 from app.email.templates import (
     EmailContent,

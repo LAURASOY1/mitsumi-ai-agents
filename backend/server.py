@@ -1,9 +1,12 @@
-"""Supervisor entry point.
-
-The Emergent platform runs `uvicorn server:app` from /app/backend.
-This module simply re-exports the real FastAPI application defined in
-`app.main` so we don't have to touch the upstream module layout.
 """
+Supervisor entry point - Fixed import path
+"""
+import sys
+import os
+
+# Add the backend directory to Python path
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, backend_dir)
 
 from app.main import app
 

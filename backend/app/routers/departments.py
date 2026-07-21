@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Department overview endpoints.
 
 Every query is scoped to the caller's region/country via `scope_filter`.
 Super admins may pass ?region=... or ?country=... to drill down.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -25,7 +27,7 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _serialize(doc: dict[str, Any]) -> dict[str, Any]:
+def _serialize(doc: Dict[str, Any]) -> Dict[str, Any]:
     clean = {k: v for k, v in doc.items() if k != "_id"}
     for key, value in list(clean.items()):
         if isinstance(value, datetime):
@@ -46,8 +48,8 @@ async def _fetch_list(
     scope: dict,
     sort=None,
     limit: int = 10,
-    extra: dict | None = None,
-) -> list[dict]:
+    extra: dict Optional = None,
+) -> List[dict]:
     filt = {**scope, **(extra or {})}
     cursor = mongo_db[collection].find(filt, {"_id": 0})
     if sort:
@@ -56,7 +58,7 @@ async def _fetch_list(
     return [_serialize(doc) for doc in docs]
 
 
-async def _sum(collection: str, scope: dict, match_extra: dict | None = None, field: str = "amount") -> tuple[int, int]:
+async def _sum(collection: str, scope: dict, match_extra: dict Optional = None, field: str = "amount") -> Tuple[int, int]:
     match = {**scope, **(match_extra or {})}
     rows = await mongo_db[collection].aggregate([
         {"$match": match},
@@ -170,7 +172,7 @@ async def _finance_overview(scope: dict) -> dict:
     revenue_total, _ = await _sum("sales_orders", scope)
 
     aging_buckets = [("current", 0, 0), ("1-30", 1, 30), ("31-60", 31, 60), ("60+", 61, 9999)]
-    aging: list[dict] = []
+    aging: List[dict] = []
     for label, lo, hi in aging_buckets:
         match: dict = {**scope, "status": {"$in": ["outstanding", "overdue"]}}
         if label == "current":
@@ -272,8 +274,8 @@ OVERVIEW_BUILDERS = {
 @router.get("/{name}/overview")
 async def department_overview(
     name: str,
-    region: str | None = Query(default=None),
-    country: str | None = Query(default=None),
+    region: str Optional = Query(default=None),
+    country: str Optional = Query(default=None),
     user=Depends(get_current_user_full),
 ) -> dict:
     await _ensure_access(name, user)

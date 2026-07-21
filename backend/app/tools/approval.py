@@ -1,6 +1,8 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Approval workflow tool — agents can route decisions to managers."""
 
-from __future__ import annotations
 
 import json
 from datetime import datetime, timezone

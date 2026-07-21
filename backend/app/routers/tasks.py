@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Lightweight task tracker used by the Tasks page.
 
 Tasks are backed by the `tasks` Mongo collection and are scoped per user.
 Any user can create/list/update/delete their own tasks. Admins can list all.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -21,7 +23,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 # Default tool bundles per department (mirrors routers/agents.py). We keep a
 # local copy to avoid a circular import from routers.agents.
-_DEFAULT_TOOLS_BY_DEPT: dict[str, list[str]] = {
+_DEFAULT_TOOLS_BY_DEPT: Dict[str, List[str]] = {
     "sales": ["crm_search", "sales_pipeline_summary", "mitsumi_pricing"],
     "marketing": ["campaign_list", "crm_search", "send_email"],
     "finance": ["invoice_search", "finance_aging_report", "crm_search"],
@@ -54,33 +56,33 @@ def _serialize(doc: dict) -> dict:
 
 class TaskCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
-    notes: str | None = None
+    notes: str Optional = None
     priority: str = Field(default="medium")
     status: str = Field(default="todo")
-    department: str | None = None
-    agent_prompt: str | None = None
-    tools: list[str] | None = None
-    due_at: datetime | None = None
+    department: str Optional = None
+    agent_prompt: str Optional = None
+    tools: List[str] Optional = None
+    due_at: datetime Optional = None
 
 
 class TaskUpdate(BaseModel):
-    title: str | None = None
-    notes: str | None = None
-    priority: str | None = None
-    status: str | None = None
-    department: str | None = None
-    agent_prompt: str | None = None
-    tools: list[str] | None = None
-    due_at: datetime | None = None
+    title: str Optional = None
+    notes: str Optional = None
+    priority: str Optional = None
+    status: str Optional = None
+    department: str Optional = None
+    agent_prompt: str Optional = None
+    tools: List[str] Optional = None
+    due_at: datetime Optional = None
 
 
 @router.get("")
 async def list_tasks(
-    status: str | None = Query(default=None),
-    department: str | None = Query(default=None),
+    status: str Optional = Query(default=None),
+    department: str Optional = Query(default=None),
     user=Depends(get_current_user_full),
-) -> list[dict]:
-    filt: dict[str, Any] = {"created_by": user["email"]}
+) -> List[dict]:
+    filt: Dict[str, Any] = {"created_by": user["email"]}
     if status:
         filt["status"] = status
     if department:

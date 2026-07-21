@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Centralized timezone helper — uses the configured region timezone.
 
 All timestamps displayed to users (notifications, PDFs, emails, chat)
@@ -9,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 from app.core.config import settings
 
-_tz: ZoneInfo | None = None
+_tz: ZoneInfo Optional = None
 
 
 def get_tz() -> ZoneInfo:
@@ -27,7 +30,7 @@ def now_local() -> datetime:
     return datetime.now(get_tz())
 
 
-def format_datetime(dt: datetime | None = None, fmt: str = "%B %d, %Y at %I:%M %p %Z") -> str:
+def format_datetime(dt: datetime Optional = None, fmt: str = "%B %d, %Y at %I:%M %p %Z") -> str:
     """Format a datetime for display in the user's timezone."""
     if dt is None:
         dt = now_local()
@@ -36,12 +39,12 @@ def format_datetime(dt: datetime | None = None, fmt: str = "%B %d, %Y at %I:%M %
     return dt.strftime(fmt)
 
 
-def format_short(dt: datetime | None = None) -> str:
+def format_short(dt: datetime Optional = None) -> str:
     """Short format: 'Apr 23, 2026 3:45 PM EAT'"""
     return format_datetime(dt, "%b %d, %Y %I:%M %p %Z")
 
 
-def format_time(dt: datetime | None = None) -> str:
+def format_time(dt: datetime Optional = None) -> str:
     """Time only: '3:45 PM EAT'"""
     return format_datetime(dt, "%I:%M %p %Z")
 

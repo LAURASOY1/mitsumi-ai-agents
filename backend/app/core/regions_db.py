@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Dynamic regions + countries master — DB-backed with in-memory cache.
 
 Replaces the static `REGIONS` dict in `scope.py`. The module seeds defaults
@@ -9,7 +12,6 @@ The cache is refreshed:
 - After any CRUD mutation (via `refresh_cache`)
 """
 
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -20,7 +22,7 @@ from app.core.mongo import mongo_db
 log = logging.getLogger("regions_db")
 
 # ---- Default seed -----------------------------------------------------------
-DEFAULT_REGIONS: list[dict[str, Any]] = [
+DEFAULT_REGIONS: List[Dict[str, Any]] = [
     {
         "key": "africa",
         "label": "Africa",
@@ -45,30 +47,30 @@ DEFAULT_REGIONS: list[dict[str, Any]] = [
 
 
 # ---- In-memory cache (populated on startup) ---------------------------------
-_CACHE: dict[str, Any] = {
+_CACHE: Dict[str, Any] = {
     "regions": {},            # region_key -> [{"code","name"}, ...]
     "country_to_region": {},  # code -> region_key
     "updated_at": None,
 }
 
 
-def regions_map() -> dict[str, list[dict]]:
+def regions_map() -> Dict[str, List[dict]]:
     return _CACHE["regions"]
 
 
-def all_region_keys() -> list[str]:
+def all_region_keys() -> List[str]:
     return list(_CACHE["regions"].keys())
 
 
-def all_country_codes() -> list[str]:
+def all_country_codes() -> List[str]:
     return list(_CACHE["country_to_region"].keys())
 
 
-def country_to_region() -> dict[str, str]:
+def country_to_region() -> Dict[str, str]:
     return _CACHE["country_to_region"]
 
 
-def region_for_country(code: str | None) -> str | None:
+def region_for_country(code: str Optional) -> str Optional:
     if not code:
         return None
     return _CACHE["country_to_region"].get(code.upper())
@@ -92,18 +94,18 @@ def _normalize_region(doc: dict) -> dict:
     }
 
 
-async def list_regions() -> list[dict]:
+async def list_regions() -> List[dict]:
     cursor = mongo_db["app_regions"].find({}, {"_id": 0}).sort("label", 1)
     docs = await cursor.to_list(length=200)
     return [_normalize_region(d) for d in docs]
 
 
-async def get_region(key: str) -> dict | None:
+async def get_region(key: str) -> dict Optional:
     doc = await mongo_db["app_regions"].find_one({"key": key}, {"_id": 0})
     return _normalize_region(doc) if doc else None
 
 
-async def create_region(*, key: str, label: str, countries: list[dict] | None = None) -> dict:
+async def create_region(*, key: str, label: str, countries: List[dict] Optional = None) -> dict:
     key = key.strip().lower()
     if not key:
         raise ValueError("Region key is required")
@@ -122,8 +124,8 @@ async def create_region(*, key: str, label: str, countries: list[dict] | None = 
     return _normalize_region(doc)
 
 
-async def update_region(key: str, *, label: str | None = None, countries: list[dict] | None = None) -> dict | None:
-    update: dict[str, Any] = {"updated_at": _now()}
+async def update_region(key: str, *, label: str Optional = None, countries: List[dict] Optional = None) -> dict Optional:
+    update: Dict[str, Any] = {"updated_at": _now()}
     if label is not None:
         update["label"] = label
     if countries is not None:
@@ -154,7 +156,7 @@ async def delete_region(key: str, *, cascade: bool = False) -> dict:
     """
     result = await mongo_db["app_regions"].delete_one({"key": key})
     deleted = bool(result.deleted_count)
-    affected: dict[str, int] = {}
+    affected: Dict[str, int] = {}
     users_nulled = 0
     if deleted and cascade:
         scoped_collections = (
@@ -175,7 +177,7 @@ async def delete_region(key: str, *, cascade: bool = False) -> dict:
     return {"deleted": deleted, "affected": affected, "users_nulled": users_nulled}
 
 
-async def add_country(region_key: str, *, code: str, name: str) -> dict | None:
+async def add_country(region_key: str, *, code: str, name: str) -> dict Optional:
     code = code.upper().strip()
     if not code or not name:
         raise ValueError("Country code and name are required")
@@ -188,7 +190,7 @@ async def add_country(region_key: str, *, code: str, name: str) -> dict | None:
     return await update_region(region_key, countries=countries)
 
 
-async def remove_country(region_key: str, *, code: str) -> dict | None:
+async def remove_country(region_key: str, *, code: str) -> dict Optional:
     region = await get_region(region_key)
     if not region:
         raise ValueError("Region not found")

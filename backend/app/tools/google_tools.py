@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Google Calendar + Gmail tools using OAuth2 tokens.
 
 These tools use the stored Google OAuth tokens to interact with
 the user's real Google Calendar and Gmail accounts.
 """
 
-from __future__ import annotations
 
 import base64
 import json

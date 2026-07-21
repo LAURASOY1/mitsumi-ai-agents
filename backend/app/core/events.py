@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Tiny Redis pub/sub bridge for cross-process events.
 
 The arq worker process publishes events to a single channel; the FastAPI
@@ -5,7 +8,6 @@ process subscribes on startup and forwards them to the owning user's
 WebSockets via the in-process ws_manager.
 """
 
-from __future__ import annotations
 
 import asyncio
 import json
@@ -22,7 +24,7 @@ log = logging.getLogger("events")
 CHANNEL = "mitsumi.events"
 
 
-async def publish(user_id: str, payload: dict[str, Any]) -> None:
+async def publish(user_id: str, payload: Dict[str, Any]) -> None:
     """Fire-and-forget publish from anywhere (same or different process)."""
     try:
         client = redis_asyncio.from_url(settings.REDIS_URL)
@@ -40,7 +42,7 @@ async def publish(user_id: str, payload: dict[str, Any]) -> None:
 async def subscriber_loop() -> None:
     """Long-running coroutine — started by FastAPI, forwards events to WS."""
     while True:
-        client: redis_asyncio.Redis | None = None
+        client: redis_asyncio.Redis Optional = None
         pubsub = None
         try:
             client = redis_asyncio.from_url(settings.REDIS_URL)

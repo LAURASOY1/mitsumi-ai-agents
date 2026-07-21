@@ -1,6 +1,8 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Notifications REST endpoints + WebSocket push."""
 
-from __future__ import annotations
 
 import logging
 
@@ -21,7 +23,7 @@ async def list_notifications(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     unread_only: bool = False,
-    kind: str | None = None,
+    kind: str Optional = None,
     user=Depends(get_current_user_full),
 ) -> dict:
     return await notif.list_for_user(

@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """System health endpoint.
 
 Surfaces the live status of every moving part of the platform so admins can
@@ -9,7 +12,7 @@ Returns a structured response per check:
       "generated_at": iso-string,
       "services": [
         {"key": str, "label": str, "status": "up"|"down"|"warning"|"unknown",
-         "detail": str, "hint": str | None, "latency_ms": int | None, "meta": {...}}
+         "detail": str, "hint": str Optional, "latency_ms": int Optional, "meta": {...}}
       ]
     }
 
@@ -17,7 +20,6 @@ Expensive calls (Redis/Mongo ping) run in parallel via asyncio.gather. Each
 check is wrapped so one failure never cascades the whole response.
 """
 
-from __future__ import annotations
 
 import asyncio
 import os
@@ -50,9 +52,9 @@ def _svc(
     *,
     status: str,
     detail: str,
-    hint: str | None = None,
-    latency_ms: int | None = None,
-    meta: dict | None = None,
+    hint: str Optional = None,
+    latency_ms: int Optional = None,
+    meta: dict Optional = None,
     category: str = "core",
 ) -> dict:
     return {
@@ -193,7 +195,7 @@ async def _check_agent_worker() -> dict:
 def _key_check(
     key: str,
     label: str,
-    env_value: str | None,
+    env_value: str Optional,
     *,
     hint: str,
     category: str = "integrations",

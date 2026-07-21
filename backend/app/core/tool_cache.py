@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Redis-backed tool result cache.
 
 Caches tool outputs for a configurable TTL so repeated identical queries
@@ -5,7 +8,6 @@ Caches tool outputs for a configurable TTL so repeated identical queries
 failures degrade gracefully to direct execution.
 """
 
-from __future__ import annotations
 
 import hashlib
 import json
@@ -27,7 +29,7 @@ def _cache_key(tool_name: str, args: dict) -> str:
     return f"toolcache:{tool_name}:{h}"
 
 
-async def get_cached(tool_name: str, args: dict) -> str | None:
+async def get_cached(tool_name: str, args: dict) -> str Optional:
     """Return cached result or None."""
     try:
         return await _redis.get(_cache_key(tool_name, args))

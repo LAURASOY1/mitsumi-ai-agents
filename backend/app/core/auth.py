@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -10,7 +13,7 @@ from app.core.config import settings
 security = HTTPBearer(auto_error=False)
 
 
-def create_access_token(subject: str, expires_minutes: int | None = None) -> str:
+def create_access_token(subject: str, expires_minutes: int Optional = None) -> str:
     expires_delta = timedelta(minutes=expires_minutes or settings.JWT_EXPIRE_MINUTES)
     now = datetime.now(timezone.utc)
     expire_at = now + expires_delta
@@ -18,14 +21,14 @@ def create_access_token(subject: str, expires_minutes: int | None = None) -> str
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
-def decode_token(token: str) -> dict[str, Any]:
+def decode_token(token: str) -> Dict[str, Any]:
     try:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
 
-def _subject_from_credentials(credentials: HTTPAuthorizationCredentials | None) -> str:
+def _subject_from_credentials(credentials: HTTPAuthorizationCredentials Optional) -> str:
     if not credentials:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     payload = decode_token(credentials.credentials)
@@ -36,15 +39,15 @@ def _subject_from_credentials(credentials: HTTPAuthorizationCredentials | None) 
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> dict[str, Any]:
+    credentials: HTTPAuthorizationCredentials Optional = Depends(security),
+) -> Dict[str, Any]:
     subject = _subject_from_credentials(credentials)
     return {"id": subject, "email": subject}
 
 
 async def get_current_user_full(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> dict[str, Any]:
+    credentials: HTTPAuthorizationCredentials Optional = Depends(security),
+) -> Dict[str, Any]:
     # Lazy import to avoid circular dependency with `mongo`.
     from app.core.mongo import mongo_db
 
@@ -65,7 +68,7 @@ async def get_current_user_full(
     }
 
 
-async def get_ws_user(websocket: WebSocket) -> dict[str, Any]:
+async def get_ws_user(websocket: WebSocket) -> Dict[str, Any]:
     token = websocket.query_params.get("token")
     if not token:
         auth_header = websocket.headers.get("authorization", "")

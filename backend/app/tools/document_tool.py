@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Document interaction tool — searches uploaded files in the current chat.
 
 Uses a context var instead of a module global so concurrent WS connections

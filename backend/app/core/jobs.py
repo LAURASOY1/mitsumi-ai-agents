@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Agent task queue — arq (Redis) worker + Mongo persistence.
 
 Two concerns kept deliberately separate:
@@ -16,7 +19,6 @@ long-running jobs (reports, bulk email, data exports, agent-initiated
 workflows) without touching the API surface.
 """
 
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -35,7 +37,7 @@ log = logging.getLogger("agent_tasks")
 # Task kinds registered by handlers below. Keep the set explicit so the UI
 # can whitelist what a user is allowed to kick off.
 TASK_KINDS: set[str] = set()
-HANDLERS: dict[str, Callable] = {}
+HANDLERS: Dict[str, Callable] = {}
 
 
 def redis_settings() -> RedisSettings:
@@ -89,8 +91,8 @@ async def create_task_record(
     *,
     kind: str,
     title: str,
-    department: str | None,
-    params: dict[str, Any],
+    department: str Optional,
+    params: Dict[str, Any],
     created_by: str,
 ) -> dict:
     doc = {
@@ -130,9 +132,9 @@ class TaskLogger:
     async def start(self) -> None:
         await self._set({"status": "running", "started_at": _now(), "progress": 1})
 
-    async def progress(self, *, pct: int, message: str | None = None) -> None:
+    async def progress(self, *, pct: int, message: str Optional = None) -> None:
         pct = max(0, min(100, int(pct)))
-        update: dict[str, Any] = {"progress": pct}
+        update: Dict[str, Any] = {"progress": pct}
         if message:
             await mongo_db["agent_tasks"].update_one(
                 {"_id": ObjectId(self.task_id)},
@@ -225,8 +227,8 @@ async def enqueue(
     *,
     kind: str,
     title: str,
-    department: str | None,
-    params: dict[str, Any],
+    department: str Optional,
+    params: Dict[str, Any],
     created_by: str,
 ) -> dict:
     if kind not in TASK_KINDS:

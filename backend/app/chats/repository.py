@@ -1,4 +1,6 @@
-from __future__ import annotations
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 
 from datetime import datetime, timezone
 from typing import Any
@@ -13,7 +15,7 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _to_str_id(document: dict[str, Any] | None) -> dict[str, Any] | None:
+def _to_str_id(document: Dict[str, Any] Optional) -> Dict[str, Any] Optional:
     if not document:
         return None
     data = dict(document)
@@ -27,7 +29,7 @@ class ChatRepository:
         self.chats = mongo_db["chats"]
         self.messages = mongo_db["messages"]
 
-    async def create_chat(self, *, user_id: str, agent_name: str, title: str = "New chat") -> dict[str, Any]:
+    async def create_chat(self, *, user_id: str, agent_name: str, title: str = "New chat") -> Dict[str, Any]:
         now = _utc_now()
         payload = {
             "user_id": user_id,
@@ -44,8 +46,8 @@ class ChatRepository:
         payload["_id"] = result.inserted_id
         return _to_str_id(payload) or {}
 
-    async def list_chats(self, *, user_id: str, agent_name: str, query: str | None = None) -> list[dict[str, Any]]:
-        filt: dict[str, Any] = {"user_id": user_id, "agent_name": agent_name, "is_deleted": False}
+    async def list_chats(self, *, user_id: str, agent_name: str, query: str Optional = None) -> List[Dict[str, Any]]:
+        filt: Dict[str, Any] = {"user_id": user_id, "agent_name": agent_name, "is_deleted": False}
         if query:
             filt["$or"] = [
                 {"title": {"$regex": query, "$options": "i"}},
@@ -53,20 +55,20 @@ class ChatRepository:
             ]
 
         cursor = self.chats.find(filt).sort([("pinned", DESCENDING), ("updated_at", DESCENDING)])
-        items: list[dict[str, Any]] = []
+        items: List[Dict[str, Any]] = []
         async for doc in cursor:
             parsed = _to_str_id(doc)
             if parsed:
                 items.append(parsed)
         return items
 
-    async def get_chat(self, *, chat_id: str, user_id: str) -> dict[str, Any] | None:
+    async def get_chat(self, *, chat_id: str, user_id: str) -> Dict[str, Any] Optional:
         if not ObjectId.is_valid(chat_id):
             return None
         doc = await self.chats.find_one({"_id": ObjectId(chat_id), "user_id": user_id, "is_deleted": False})
         return _to_str_id(doc)
 
-    async def get_chat_for_agent(self, *, chat_id: str, user_id: str, agent_name: str) -> dict[str, Any] | None:
+    async def get_chat_for_agent(self, *, chat_id: str, user_id: str, agent_name: str) -> Dict[str, Any] Optional:
         if not ObjectId.is_valid(chat_id):
             return None
         doc = await self.chats.find_one(
@@ -80,8 +82,8 @@ class ChatRepository:
         chat_id: str,
         role: str,
         content: str,
-        tool_events: list[dict[str, Any]] | None = None,
-    ) -> dict[str, Any]:
+        tool_events: List[Dict[str, Any]] Optional = None,
+    ) -> Dict[str, Any]:
         now = _utc_now()
         payload = {
             "chat_id": chat_id,
@@ -94,9 +96,9 @@ class ChatRepository:
         payload["_id"] = result.inserted_id
         return _to_str_id(payload) or {}
 
-    async def list_messages(self, *, chat_id: str) -> list[dict[str, Any]]:
+    async def list_messages(self, *, chat_id: str) -> List[Dict[str, Any]]:
         cursor = self.messages.find({"chat_id": chat_id}).sort([("created_at", 1)])
-        items: list[dict[str, Any]] = []
+        items: List[Dict[str, Any]] = []
         async for doc in cursor:
             parsed = _to_str_id(doc)
             if parsed:
@@ -108,13 +110,13 @@ class ChatRepository:
         *,
         chat_id: str,
         user_id: str,
-        title: str | None = None,
-        pinned: bool | None = None,
-    ) -> dict[str, Any] | None:
+        title: str Optional = None,
+        pinned: bool Optional = None,
+    ) -> Dict[str, Any] Optional:
         if not ObjectId.is_valid(chat_id):
             return None
 
-        update_set: dict[str, Any] = {"updated_at": _utc_now()}
+        update_set: Dict[str, Any] = {"updated_at": _utc_now()}
         if title is not None:
             update_set["title"] = title.strip() or "Untitled chat"
         if pinned is not None:
@@ -142,7 +144,7 @@ class ChatRepository:
         user_id: str,
         assistant_preview: str,
         increment_by: int = 2,
-    ) -> dict[str, Any] | None:
+    ) -> Dict[str, Any] Optional:
         if not ObjectId.is_valid(chat_id):
             return None
 

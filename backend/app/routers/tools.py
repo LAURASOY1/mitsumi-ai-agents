@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Tool run history for the Tool Results page.
 
 Reads `messages` + `chats` for the current user and extracts tool events so
 the UI can render a recent-runs timeline across all agents.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -28,9 +30,9 @@ def _serialize(value: Any) -> Any:
 
 
 @router.get("/recent")
-async def recent_tool_runs(limit: int = Query(default=40, ge=1, le=200), user=Depends(get_current_user_full)) -> list[dict]:
+async def recent_tool_runs(limit: int = Query(default=40, ge=1, le=200), user=Depends(get_current_user_full)) -> List[dict]:
     chats_cursor = mongo_db["chats"].find({"user_id": user["email"]}, {"_id": 1, "agent_name": 1, "title": 1})
-    chat_index: dict[str, dict] = {}
+    chat_index: Dict[str, dict] = {}
     async for c in chats_cursor:
         chat_index[str(c["_id"])] = {"chat_id": str(c["_id"]), "agent_name": c.get("agent_name"), "title": c.get("title")}
 

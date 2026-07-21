@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Bedrock model catalogue and per-department model configuration.
 
 Keeps a single source of truth for which Claude models are available,
@@ -5,7 +8,6 @@ their capabilities and cost tier. The `model_config` MongoDB collection
 stores per-department overrides (otherwise `DEFAULT_MODEL` is used).
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 
@@ -56,10 +58,10 @@ DEPARTMENT_DEFAULTS = {
 }
 
 # ── Runtime cache (refreshed on PATCH) ──────────────────────────────────
-_config_cache: dict[str, str] = {}
+_config_cache: Dict[str, str] = {}
 
 
-async def _load_config() -> dict[str, str]:
+async def _load_config() -> Dict[str, str]:
     """Load per-department model overrides from Mongo."""
     global _config_cache
     doc = await mongo_db["model_config"].find_one({"_id": "departments"})

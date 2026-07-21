@@ -1,4 +1,6 @@
-from __future__ import annotations
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 
 import asyncio
 from typing import Any
@@ -12,13 +14,13 @@ class ChatService:
     def __init__(self) -> None:
         self.repo = ChatRepository()
 
-    async def create_chat(self, *, user_id: str, agent_name: str) -> dict[str, Any]:
+    async def create_chat(self, *, user_id: str, agent_name: str) -> Dict[str, Any]:
         return await self.repo.create_chat(user_id=user_id, agent_name=agent_name)
 
-    async def list_chats(self, *, user_id: str, agent_name: str, query: str | None) -> list[dict[str, Any]]:
+    async def list_chats(self, *, user_id: str, agent_name: str, query: str Optional) -> List[Dict[str, Any]]:
         return await self.repo.list_chats(user_id=user_id, agent_name=agent_name, query=query)
 
-    async def get_chat_with_messages(self, *, user_id: str, chat_id: str) -> dict[str, Any] | None:
+    async def get_chat_with_messages(self, *, user_id: str, chat_id: str) -> Dict[str, Any] Optional:
         chat = await self.repo.get_chat(chat_id=chat_id, user_id=user_id)
         if not chat:
             return None
@@ -27,8 +29,8 @@ class ChatService:
         return chat
 
     async def rename_or_pin(
-        self, *, user_id: str, chat_id: str, title: str | None = None, pinned: bool | None = None
-    ) -> dict[str, Any] | None:
+        self, *, user_id: str, chat_id: str, title: str Optional = None, pinned: bool Optional = None
+    ) -> Dict[str, Any] Optional:
         return await self.repo.update_chat(chat_id=chat_id, user_id=user_id, title=title, pinned=pinned)
 
     async def delete_chat(self, *, user_id: str, chat_id: str) -> bool:

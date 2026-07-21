@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from app.core.config import settings
 from app.email import login_otp_template, reset_otp_template, send_transactional_email
 

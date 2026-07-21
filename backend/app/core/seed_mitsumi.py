@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Mitsumi Distribution demo data seeder.
 
 Idempotent: each collection only gets seeded when empty so repeated backend
@@ -19,7 +22,6 @@ Seeds the full catalogue used by department pages and agent tools:
 - knowledge_base        RAG corpus
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
@@ -318,8 +320,8 @@ async def seed_mitsumi(db) -> None:
     # consistent scope without duplicating the data in each dict above.
     id_to_country = {row["customer_id"]: row["country"] for row in CUSTOMERS}
 
-    def _enrich(rows: list[dict]) -> list[dict]:
-        out: list[dict] = []
+    def _enrich(rows: List[dict]) -> List[dict]:
+        out: List[dict] = []
         for raw in rows:
             row = dict(raw)
             country = row.get("country") or id_to_country.get(row.get("customer_id") or "") or "KE"

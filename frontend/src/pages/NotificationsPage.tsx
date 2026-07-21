@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -22,7 +22,8 @@ import {
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
-  type NotificationRecord
+  type NotificationRecord,
+  type NotificationKind
 } from "../api/client";
 import { useToast } from "../store/toast";
 import { formatRelative } from "../lib/format";
@@ -30,9 +31,9 @@ import { cn } from "../lib/cn";
 
 const PAGE_SIZE = 20;
 
-type FilterKind = "all" | "job" | "task" | "user" | "system";
+type FilterKind = "all" | NotificationKind;
 
-const KIND_META: Record<NotificationRecord["kind"], { label: string; icon: React.ReactNode; tone: "info" | "brand" | "warning" | "neutral" }> = {
+const KIND_META: Record<NotificationKind, { label: string; icon: React.ReactNode; tone: "info" | "brand" | "warning" | "neutral" }> = {
   job: { label: "Job", icon: <Zap className="w-4 h-4" />, tone: "info" },
   task: { label: "Task", icon: <BellRing className="w-4 h-4" />, tone: "brand" },
   user: { label: "User", icon: <ShieldCheck className="w-4 h-4" />, tone: "warning" },
@@ -274,7 +275,7 @@ function NotificationRow({
   );
 }
 
-export function Pagination({
+function Pagination({
   page,
   totalPages,
   onPrev,

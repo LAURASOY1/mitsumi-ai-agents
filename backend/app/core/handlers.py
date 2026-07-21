@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Registered task handlers — one module so new long-running jobs live in
 one obvious place. Each handler is a plain async function that gets a
 `TaskLogger` (for progress + logs + final result) and a `params` dict.
@@ -6,7 +9,6 @@ Handlers deliberately lean on the existing agent tools so we get the full
 Mitsumi data pipeline for free.
 """
 
-from __future__ import annotations
 
 import asyncio
 import json
@@ -213,7 +215,7 @@ async def run_agent_prompt(logger, params: dict) -> dict:
     await logger.progress(pct=20, message="Agent is working…")
 
     collected_text = ""
-    tool_calls_log: list[str] = []
+    tool_calls_log: List[str] = []
     session_id = f"job-{task_id or datetime.now(timezone.utc).timestamp()}"
     try:
         from langchain_core.messages import AIMessage as _AIMessage, ToolMessage as _ToolMessage

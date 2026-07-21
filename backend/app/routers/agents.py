@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 import asyncio
 from typing import Any
 
@@ -29,7 +32,7 @@ chat_repo = ChatRepository()
 
 # Short user-facing description + friendly label per tool (used by the "+"
 # tool picker in chat and the Tasks composer). Labels are non-technical.
-TOOL_META: dict[str, dict[str, str]] = {
+TOOL_META: Dict[str, Dict[str, str]] = {
     "crm_search": {"label": "Find customers & leads", "description": "Look up Mitsumi customers, contacts or leads."},
     "crm_update": {"label": "Update a CRM record", "description": "Change owner, stage or notes on a CRM record."},
     "customer_analytics": {"label": "Customer 360", "description": "Full customer view: deals, invoices, tickets, health score."},
@@ -64,7 +67,7 @@ TOOL_META: dict[str, dict[str, str]] = {
 
 # Default tool bundles per department — used to auto-pick when the user
 # doesn't specify tools on a task or agent job.
-DEPARTMENT_DEFAULT_TOOLS: dict[str, list[str]] = {
+DEPARTMENT_DEFAULT_TOOLS: Dict[str, List[str]] = {
     "sales": ["crm_search", "sales_pipeline_summary", "mitsumi_pricing", "customer_analytics"],
     "marketing": ["campaign_list", "crm_search", "send_email", "customer_analytics"],
     "finance": ["invoice_search", "finance_aging_report", "crm_search", "customer_analytics"],
@@ -108,7 +111,7 @@ async def list_agent_tools(name: str, user=Depends(get_current_user_full)) -> di
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str | None = None
+    session_id: Optional[str] = None
 
 
 class VoiceCorrectRequest(BaseModel):
@@ -231,7 +234,7 @@ async def stream_chat(websocket: WebSocket, name: str, chat_id: str) -> None:
                 [{"role": msg.get("role", "assistant"), "content": msg.get("content", "")} for msg in existing],
             )
 
-    inbound: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+    inbound: asyncio.Queue[Dict[str, Any]] = asyncio.Queue()
 
     async def _receive_loop() -> None:
         try:
@@ -244,7 +247,7 @@ async def stream_chat(websocket: WebSocket, name: str, chat_id: str) -> None:
             await inbound.put({"_disconnect": True})
 
     receiver_task = asyncio.create_task(_receive_loop())
-    agent: BaseAgent | None = None
+    agent: BaseAgent Optional = None
     # Outbound queue for agent events — serializes all WS sends
     outbound: asyncio.Queue = asyncio.Queue()
 

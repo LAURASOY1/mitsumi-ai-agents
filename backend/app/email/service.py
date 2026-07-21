@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 import json
 from pathlib import Path
 
@@ -46,7 +49,7 @@ def _log_fallback(
     to_email: str,
     content: EmailContent,
     reason: str,
-    provider_response: str | None = None,
+    provider_response: str Optional = None,
 ) -> None:
     EMAIL_FALLBACK_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with EMAIL_FALLBACK_LOG_PATH.open("a", encoding="utf-8") as handle:

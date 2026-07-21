@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Background agent runner — decouples agent execution from WebSocket.
 
 When a user sends a message, the agent runs in a background task that:
@@ -8,7 +11,6 @@ When a user sends a message, the agent runs in a background task that:
 If the user disconnects and reconnects, they see saved messages.
 """
 
-from __future__ import annotations
 
 import asyncio
 import json
@@ -25,7 +27,7 @@ from app.core.ws import ws_manager
 log = logging.getLogger("agent_runner")
 
 # Track active runs by chat_id so we don't double-run
-_active_runs: dict[str, asyncio.Task] = {}
+_active_runs: Dict[str, asyncio.Task] = {}
 
 
 def is_running(chat_id: str) -> bool:
@@ -41,7 +43,7 @@ async def run_agent_background(
     user_id: str,
     user_email: str,
     agent_name: str,
-    outbound: asyncio.Queue | None = None,
+    outbound: asyncio.Queue Optional = None,
 ) -> None:
     """Fire-and-forget agent execution. Pushes events to outbound queue for WS delivery."""
 
@@ -56,11 +58,11 @@ async def run_agent_background(
                 pass
 
     assistant_text = ""
-    tool_events: list[dict] = []
+    tool_events: List[dict] = []
     seen_tool_calls: set[str] = set()
     seen_tool_results: set[str] = set()
     seen_plan_texts: set[str] = set()
-    call_start_by_name: dict[str, float] = {}
+    call_start_by_name: Dict[str, float] = {}
     emitted_call_names: set[str] = set()  # track tool names we already sent call events for
     emitted_result_names: set[str] = set()  # track tool names we already sent result events for
 
@@ -189,7 +191,7 @@ async def run_agent_background(
     _active_runs.pop(chat_id, None)
 
 
-def start_agent_run(*, outbound: asyncio.Queue | None = None, **kwargs) -> asyncio.Task:
+def start_agent_run(*, outbound: asyncio.Queue Optional = None, **kwargs) -> asyncio.Task:
     """Start a background agent run. Returns the task."""
     chat_id = kwargs["chat_id"]
     old = _active_runs.get(chat_id)

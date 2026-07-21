@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Agent task API — enqueue + list + fetch + cancel.
 
 Used by the Tasks page to show agent-initiated jobs alongside the manual
@@ -5,7 +8,6 @@ to-do items. Enqueueing returns the Mongo record immediately; the worker
 picks it up from Redis moments later and streams progress events via WS.
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -24,7 +26,7 @@ from app.core import handlers  # noqa: F401
 router = APIRouter(prefix="/agent-tasks", tags=["agent-tasks"])
 
 
-def _serialize(doc: dict[str, Any]) -> dict[str, Any]:
+def _serialize(doc: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": str(doc.get("_id")),
         "kind": doc.get("kind"),
@@ -44,7 +46,7 @@ def _serialize(doc: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _iso(value) -> str | None:
+def _iso(value) -> str Optional:
     if isinstance(value, datetime):
         return value.astimezone(timezone.utc).isoformat()
     return value
@@ -53,8 +55,8 @@ def _iso(value) -> str | None:
 class EnqueueRequest(BaseModel):
     kind: str
     title: str = Field(min_length=1)
-    department: str | None = None
-    params: dict[str, Any] = Field(default_factory=dict)
+    department: str Optional = None
+    params: Dict[str, Any] = Field(default_factory=dict)
 
 
 @router.get("/kinds")
@@ -64,11 +66,11 @@ async def list_kinds(user=Depends(get_current_user_full)) -> dict:
 
 @router.get("")
 async def list_agent_tasks(
-    status: str | None = Query(default=None),
+    status: str Optional = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     user=Depends(get_current_user_full),
-) -> list[dict]:
-    filt: dict[str, Any] = {"created_by": user["email"]}
+) -> List[dict]:
+    filt: Dict[str, Any] = {"created_by": user["email"]}
     if status:
         filt["status"] = status
     cursor = mongo_db["agent_tasks"].find(filt).sort("created_at", -1).limit(limit)

@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """arq worker entry point — run with:
 
     arq app.core.worker.WorkerSettings
@@ -5,7 +8,6 @@
 Managed by supervisor (see /etc/supervisor/conf.d/agent-worker.conf).
 """
 
-from __future__ import annotations
 
 # Importing handlers registers them into the HANDLERS dict.
 from app.core import handlers  # noqa: F401

@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Document generation tools — PDF and Excel with Mitsumi branding.
 
 PDF uses Quicksand font family with proper visual hierarchy,
 branded colors, clean tables, and structured layouts.
 """
 
-from __future__ import annotations
 
 import json
 import os
@@ -26,7 +28,7 @@ MUTED = (100 / 255, 116 / 255, 139 / 255)
 LIGHT_BG = (241 / 255, 245 / 255, 249 / 255)
 
 
-def _download_logo() -> str | None:
+def _download_logo() -> str Optional:
     logo_path = OUTPUT_DIR / "mitsumi_logo.png"
     if logo_path.exists():
         return str(logo_path)

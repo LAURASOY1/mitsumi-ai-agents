@@ -1,3 +1,4 @@
+# /terraform/modules/databases/variables.tf
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -13,37 +14,38 @@ variable "database_subnet_ids" {
   type        = list(string)
 }
 
-variable "security_group_ids" {
-  description = "Security group IDs"
+variable "mongodb_security_group_ids" {
+  description = "MongoDB security group IDs"
   type        = list(string)
 }
 
-variable "rds_instance_class" {
-  description = "RDS instance class"
-  type        = string
-}
-
-variable "rds_allocated_storage" {
-  description = "RDS storage size"
-  type        = number
-}
-
-variable "rds_backup_retention" {
-  description = "RDS backup retention days"
-  type        = number
-}
-
-variable "redis_node_type" {
-  description = "Redis node type"
-  type        = string
+variable "redis_security_group_ids" {
+  description = "Redis security group IDs"
+  type        = list(string)
 }
 
 variable "docdb_instance_class" {
   description = "DocumentDB instance class"
   type        = string
+  default     = "db.r6g.large"
 }
 
-variable "mysql_instance_class" {
-  description = "MySQL instance class"
+variable "redis_node_type" {
+  description = "Redis node type"
   type        = string
+  default     = "cache.r6g.large"
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API Key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "anthropic_api_key" {
+  description = "Anthropic API Key"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

@@ -1,5 +1,11 @@
+# /terraform/modules/compute/variables.tf
 variable "environment" {
   description = "Environment name"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 
@@ -38,8 +44,29 @@ variable "ecs_task_role_arn" {
   type        = string
 }
 
-variable "rds_address" {
-  description = "RDS PostgreSQL address"
+variable "certificate_arn" {
+  description = "ACM Certificate ARN"
+  type        = string
+}
+
+variable "log_bucket_id" {
+  description = "S3 bucket ID for ALB logs"
+  type        = string
+  default     = ""
+}
+
+variable "mongodb_secret_arn" {
+  description = "MongoDB secret ARN"
+  type        = string
+}
+
+variable "redis_secret_arn" {
+  description = "Redis secret ARN"
+  type        = string
+}
+
+variable "llm_secret_arn" {
+  description = "LLM keys secret ARN"
   type        = string
 }
 
@@ -48,23 +75,8 @@ variable "redis_address" {
   type        = string
 }
 
-variable "docdb_address" {
-  description = "DocumentDB address"
-  type        = string
-}
-
-variable "mysql_address" {
-  description = "MySQL address"
-  type        = string
-}
-
 variable "api_desired_count" {
   description = "Number of API replicas"
-  type        = number
-}
-
-variable "worker_desired_count" {
-  description = "Number of Worker replicas"
   type        = number
 }
 

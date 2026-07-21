@@ -1,10 +1,12 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """File upload + chunking for chat-scoped document interaction.
 
 Uploaded files are stored in MongoDB, chunked into segments, and made
 available to the agent via the `document_search` tool.
 """
 
-from __future__ import annotations
 
 import hashlib
 import io
@@ -27,7 +29,7 @@ async def ensure_indexes() -> None:
         pass
 
 
-def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
+def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> List[str]:
     """Split text into overlapping chunks."""
     chunks = []
     start = 0
@@ -97,7 +99,7 @@ async def upload_document(
     filename: str,
     content: bytes,
     user_email: str,
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """Upload a file, extract text, chunk it, and store in MongoDB."""
     text = _extract_text(content, filename)
     chunks = _chunk_text(text)
@@ -125,7 +127,7 @@ async def upload_document(
     }
 
 
-async def search_documents(chat_id: str, query: str, top_k: int = 5) -> list[dict]:
+async def search_documents(chat_id: str, query: str, top_k: int = 5) -> List[dict]:
     """Search uploaded documents for a chat by text matching."""
     docs = await mongo_db[COLLECTION].find(
         {"chat_id": chat_id}, {"_id": 0, "filename": 1, "chunks": 1}
@@ -157,7 +159,7 @@ async def search_documents(chat_id: str, query: str, top_k: int = 5) -> list[dic
     return results[:top_k]
 
 
-async def list_documents(chat_id: str) -> list[dict]:
+async def list_documents(chat_id: str) -> List[dict]:
     """List all uploaded documents for a chat."""
     docs = await mongo_db[COLLECTION].find(
         {"chat_id": chat_id},

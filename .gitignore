@@ -118,3 +118,4 @@ yarn.lock
 coverage/
 .pytest_cache/
 test-results/
+.env.example

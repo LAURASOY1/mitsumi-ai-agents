@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """In-app notifications.
 
 A tiny service for "you have mail" style notifications. Notifications are
@@ -14,7 +17,6 @@ Kinds (for the UI icon):
     "system"    — region deleted, key rotated, etc.
 """
 
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -48,10 +50,10 @@ async def notify(
     recipient_email: str,
     kind: str,
     title: str,
-    body: str | None = None,
-    link: str | None = None,
-    metadata: dict | None = None,
-) -> dict | None:
+    body: str Optional = None,
+    link: str Optional = None,
+    metadata: dict Optional = None,
+) -> dict Optional:
     """Insert a new notification and publish a real-time event.
 
     The Redis pub/sub publish is best-effort: if the worker process or the
@@ -115,9 +117,9 @@ async def list_for_user(
     skip: int = 0,
     limit: int = 20,
     unread_only: bool = False,
-    kind: str | None = None,
+    kind: str Optional = None,
 ) -> dict:
-    filt: dict[str, Any] = {"recipient_email": email.lower()}
+    filt: Dict[str, Any] = {"recipient_email": email.lower()}
     if unread_only:
         filt["read"] = False
     if kind and kind in VALID_KINDS:

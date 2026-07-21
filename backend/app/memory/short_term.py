@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Short-term memory backed by Redis with auto-summarisation.
 
 When the conversation exceeds MAX_MESSAGES, older messages are summarised
@@ -28,7 +31,7 @@ def build_summary_key(session_id: str) -> str:
     return f"session:{session_id}:summary"
 
 
-async def get_short_term_memory(session_id: str) -> list[dict[str, Any]]:
+async def get_short_term_memory(session_id: str) -> List[Dict[str, Any]]:
     try:
         data = await redis_client.get(build_session_key(session_id))
         if not data:
@@ -53,7 +56,7 @@ async def set_conversation_summary(session_id: str, summary: str) -> None:
         pass
 
 
-async def append_short_term_memory(session_id: str, message: dict[str, Any]) -> None:
+async def append_short_term_memory(session_id: str, message: Dict[str, Any]) -> None:
     messages = await get_short_term_memory(session_id)
     messages.append(message)
     capped = messages[-MAX_MESSAGES:]
@@ -63,7 +66,7 @@ async def append_short_term_memory(session_id: str, message: dict[str, Any]) -> 
         return
 
 
-async def set_short_term_memory(session_id: str, messages: list[dict[str, Any]]) -> None:
+async def set_short_term_memory(session_id: str, messages: List[Dict[str, Any]]) -> None:
     capped = messages[-MAX_MESSAGES:]
     try:
         await redis_client.set(build_session_key(session_id), json.dumps(capped), ex=settings.REDIS_TTL_SECONDS)

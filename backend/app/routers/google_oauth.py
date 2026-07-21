@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Google OAuth2 — Calendar + Gmail integration.
 
 Flow:
@@ -8,7 +11,6 @@ Flow:
 5. Agent tools use stored tokens with auto-refresh
 """
 
-from __future__ import annotations
 
 import json
 import secrets

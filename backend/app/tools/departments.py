@@ -1,6 +1,8 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Department-specific tools backed by the seeded Mitsumi Mongo collections."""
 
-from __future__ import annotations
 
 import json
 

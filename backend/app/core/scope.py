@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Region + country scope rules.
 
 Region / country master data is now stored in Mongo (`app_regions`) and
@@ -19,7 +22,6 @@ Role hierarchy (highest first):
     member          -> one country (read-mostly)
 """
 
-from __future__ import annotations
 
 from app.core import regions_db as _rdb
 
@@ -28,7 +30,7 @@ class _RegionsProxy:
     """Dict-like proxy onto `regions_db.regions_map()` so callers can still
     do `REGIONS["africa"]` or `for k, v in REGIONS.items()`."""
 
-    def __getitem__(self, key: str) -> list[dict]:
+    def __getitem__(self, key: str) -> List[dict]:
         return _rdb.regions_map()[key]
 
     def get(self, key: str, default=None):
@@ -53,15 +55,15 @@ class _RegionsProxy:
 REGIONS = _RegionsProxy()
 
 
-def _all_regions() -> list[str]:
+def _all_regions() -> List[str]:
     return _rdb.all_region_keys()
 
 
-def _all_countries() -> list[str]:
+def _all_countries() -> List[str]:
     return _rdb.all_country_codes()
 
 
-def _country_to_region() -> dict[str, str]:
+def _country_to_region() -> Dict[str, str]:
     return _rdb.country_to_region()
 
 
@@ -125,13 +127,13 @@ class _DictProxy(dict):
 COUNTRY_TO_REGION = _DictProxy(_country_to_region)
 
 
-def region_for_country(country_code: str | None) -> str | None:
+def region_for_country(country_code: str Optional) -> str Optional:
     return _rdb.region_for_country(country_code)
 
 
 # ---------- Roles ---------------------------------------------------------
 
-ROLES: list[dict] = [
+ROLES: List[dict] = [
     {
         "key": "super_admin",
         "label": "Super Admin",
@@ -192,7 +194,7 @@ ROLE_KEYS = {role["key"] for role in ROLES}
 ADMIN_ROLES = {"super_admin", "regional_head", "regional_admin", "country_admin"}
 
 
-def highest_role(roles: list[str] | None) -> str | None:
+def highest_role(roles: List[str] Optional) -> str Optional:
     if not roles:
         return None
     ranking = ["super_admin", "regional_head", "regional_admin", "country_admin", "member"]
@@ -202,7 +204,7 @@ def highest_role(roles: list[str] | None) -> str | None:
     return None
 
 
-def can_invite(inviter_roles: list[str] | None, target_role: str) -> bool:
+def can_invite(inviter_roles: List[str] Optional, target_role: str) -> bool:
     inviter = highest_role(inviter_roles)
     if not inviter:
         return False
@@ -232,7 +234,7 @@ def user_scope(user: dict) -> dict:
     return {"scope": "global", "region": None, "country": None, "roles": roles}
 
 
-def scope_filter(user: dict, *, region_override: str | None = None, country_override: str | None = None) -> dict:
+def scope_filter(user: dict, *, region_override: str Optional = None, country_override: str Optional = None) -> dict:
     """Build the Mongo filter that enforces region/country scope for a user."""
     s = user_scope(user)
     filt: dict = {}

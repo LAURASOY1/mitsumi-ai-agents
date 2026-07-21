@@ -7,7 +7,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { listAuditEntries } from "../../api/client";
 import type { AuditEntry } from "../../types";
 import { formatRelative } from "../../lib/format";
-import { Pagination } from "../NotificationsPage";
+import { Pagination } from "../../components/ui/Pagination";
 
 const PAGE_SIZE = 25;
 

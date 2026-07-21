@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Settings & user management.
 
 Endpoints:
@@ -11,7 +14,6 @@ Endpoints:
     PATCH /api/users/me/preferences -> update my preferences
 """
 
-from __future__ import annotations
 
 import asyncio
 import secrets
@@ -74,7 +76,7 @@ async def _require_admin(user: dict) -> None:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
 
-async def _send_invite_email(email: str, token: str, invitee_name: str | None) -> dict:
+async def _send_invite_email(email: str, token: str, invitee_name: str Optional) -> dict:
     """Send an invite email via Resend, falling back to stdout log if no key."""
     invite_url = f"{settings.APP_BASE_URL.rstrip('/')}/set-password?token={token}&email={email}"
     subject = "You have been invited to Mitsumi AI"
@@ -129,13 +131,13 @@ async def list_country_catalog(user=Depends(get_current_user_full)) -> dict:
 
 class RegionCreate(BaseModel):
     key: str
-    label: str | None = None
-    countries: list[dict] | None = None
+    label: str Optional = None
+    countries: List[dict] Optional = None
 
 
 class RegionUpdate(BaseModel):
-    label: str | None = None
-    countries: list[dict] | None = None
+    label: str Optional = None
+    countries: List[dict] Optional = None
 
 
 class CountryPayload(BaseModel):
@@ -241,32 +243,32 @@ async def list_roles(user=Depends(get_current_user_full)) -> dict:
 
 class InviteRequest(BaseModel):
     email: EmailStr
-    name: str | None = None
+    name: str Optional = None
     role: str = Field(default="member")
-    region: str | None = None
-    country: str | None = None
-    modules: list[str] | None = None
+    region: str Optional = None
+    country: str Optional = None
+    modules: List[str] Optional = None
 
 
 class UpdateUserRequest(BaseModel):
-    name: str | None = None
-    role: str | None = None
-    region: str | None = None
-    country: str | None = None
-    modules: list[str] | None = None
-    status: str | None = None
+    name: str Optional = None
+    role: str Optional = None
+    region: str Optional = None
+    country: str Optional = None
+    modules: List[str] Optional = None
+    status: str Optional = None
 
 
 @router.get("/users")
 async def list_users(
-    q: str | None = Query(default=None),
-    role: str | None = Query(default=None),
-    region: str | None = Query(default=None),
-    country: str | None = Query(default=None),
+    q: str Optional = Query(default=None),
+    role: str Optional = Query(default=None),
+    region: str Optional = Query(default=None),
+    country: str Optional = Query(default=None),
     user=Depends(get_current_user_full),
-) -> list[dict]:
+) -> List[dict]:
     await _require_admin(user)
-    filt: dict[str, Any] = {}
+    filt: Dict[str, Any] = {}
     if q:
         filt["$or"] = [
             {"email": {"$regex": q, "$options": "i"}},
@@ -294,16 +296,16 @@ async def list_users(
 
 @router.get("/users/mention-search")
 async def mention_search(
-    q: str | None = Query(default=None, max_length=64),
+    q: str Optional = Query(default=None, max_length=64),
     user=Depends(get_current_user_full),
-) -> list[dict]:
+) -> List[dict]:
     """Lightweight, member-accessible directory lookup for @mention autocomplete.
 
     Returns only `{email, name}` (no roles / region / phone) scoped to the same
     region as the caller so members don't leak cross-region teammate info.
     Caller themselves is filtered out. Max 8 results.
     """
-    filt: dict[str, Any] = {"status": {"$ne": "deactivated"}}
+    filt: Dict[str, Any] = {"status": {"$ne": "deactivated"}}
     # Exclude self.
     if user.get("email"):
         filt["email"] = {"$ne": user["email"]}
@@ -429,7 +431,7 @@ async def update_user(user_id: str, payload: UpdateUserRequest, user=Depends(get
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
 
-    update: dict[str, Any] = {}
+    update: Dict[str, Any] = {}
     if payload.name is not None:
         update["name"] = payload.name
     if payload.role is not None:
@@ -476,11 +478,11 @@ async def delete_user(user_id: str, user=Depends(get_current_user_full)) -> dict
 
 
 class PreferencesUpdate(BaseModel):
-    theme: str | None = None
-    timezone: str | None = None
-    notifications: dict | None = None
-    default_region: str | None = None
-    default_country: str | None = None
+    theme: str Optional = None
+    timezone: str Optional = None
+    notifications: dict Optional = None
+    default_region: str Optional = None
+    default_country: str Optional = None
 
 
 @router.get("/users/me/preferences")
@@ -563,8 +565,8 @@ async def get_token_usage(days: int = 30, user=Depends(get_current_user_full)) -
 
 @router.get("/settings/approvals")
 async def list_approvals(
-    status: str | None = None,
-    category: str | None = None,
+    status: str Optional = None,
+    category: str Optional = None,
     user=Depends(get_current_user_full),
 ) -> list:
     """List approval requests. Admins see all, others see their own."""

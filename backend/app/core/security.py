@@ -1,50 +1,39 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 import hashlib
-import hmac
 import secrets
-from datetime import datetime, timedelta, timezone
+import base64
+from typing import Optional
 
-from app.core.config import settings
+def hash_password(password: str, salt: Optional[str] = None) -> str:
+    """Hash a password with a salt"""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    
+    # Use PBKDF2 for secure password hashing
+    hash_obj = hashlib.pbkdf2_hmac(
+        'sha256',
+        password.encode('utf-8'),
+        salt.encode('utf-8'),
+        100000
+    )
+    
+    # Combine salt and hash
+    return f"{salt}:{base64.b64encode(hash_obj).decode('utf-8')}"
 
-
-def normalize_email(email: str) -> str:
-    return email.strip().lower()
-
-
-def is_allowed_email_domain(email: str) -> bool:
-    normalized = normalize_email(email)
-    return normalized.endswith(f"@{settings.AUTH_ALLOWED_DOMAIN}")
-
-
-def hash_password(password: str, salt: str | None = None) -> str:
-    secret_salt = salt or secrets.token_hex(16)
-    derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), secret_salt.encode("utf-8"), 150_000)
-    return f"{secret_salt}${derived.hex()}"
-
-
-def verify_password(password: str, password_hash: str) -> bool:
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against a hash"""
     try:
-        salt, expected_hash = password_hash.split("$", 1)
+        salt, hash_str = hashed.split(':')
+        return hash_password(password, salt) == hashed
     except ValueError:
         return False
-    candidate = hash_password(password, salt).split("$", 1)[1]
-    return hmac.compare_digest(candidate, expected_hash)
 
+def normalize_email(email: str) -> str:
+    """Normalize email to lowercase"""
+    return email.strip().lower()
 
-def hash_secret_value(value: str) -> str:
-    return hashlib.sha256(f"{settings.JWT_SECRET}:{value}".encode("utf-8")).hexdigest()
-
-
-def generate_otp_code() -> str:
-    return f"{secrets.randbelow(1_000_000):06d}"
-
-
-def generate_reset_token() -> str:
-    return secrets.token_urlsafe(32)
-
-
-def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def future_minutes(minutes: int) -> datetime:
-    return utc_now() + timedelta(minutes=minutes)
+def generate_secure_token(length: int = 32) -> str:
+    """Generate a secure random token"""
+    return secrets.token_urlsafe(length)

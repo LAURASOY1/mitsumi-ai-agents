@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Lightweight audit log helpers.
 
 Writes compact events to the `audit_logs` collection so Settings → Audit Log
@@ -5,7 +8,6 @@ can render a chronological trail. Non-blocking failures are swallowed so a
 logging hiccup never takes down the underlying request.
 """
 
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -29,9 +31,9 @@ ACTIONS = {
 async def record(
     action: str,
     *,
-    actor: dict | str | None,
-    target: str | None = None,
-    metadata: dict[str, Any] | None = None,
+    actor: dict | str Optional,
+    target: str Optional = None,
+    metadata: Dict[str, Any] Optional = None,
 ) -> None:
     try:
         if isinstance(actor, dict):

@@ -1,4 +1,4 @@
-# ENVIRONMENT VARIABLE
+# /terraform/variables.tf
 variable "environment" {
   description = "Environment name (dev/staging/prod)"
   type        = string
@@ -8,6 +8,11 @@ variable "aws_region" {
   description = "AWS region"
   type        = string
   default     = "eu-west-1"
+}
+
+variable "account_id" {
+  description = "AWS Account ID"
+  type        = string
 }
 
 # NETWORKING VARIABLES
@@ -41,24 +46,11 @@ variable "database_subnet_cidrs" {
   default     = ["10.0.201.0/24", "10.0.202.0/24", "10.0.203.0/24"]
 }
 
-
 # DATABASE VARIABLES
-variable "rds_instance_class" {
-  description = "RDS instance class"
+variable "docdb_instance_class" {
+  description = "DocumentDB instance class"
   type        = string
   default     = "db.r6g.large"
-}
-
-variable "rds_allocated_storage" {
-  description = "RDS storage size in GB"
-  type        = number
-  default     = 100
-}
-
-variable "rds_backup_retention_days" {
-  description = "RDS backup retention days"
-  type        = number
-  default     = 30
 }
 
 variable "redis_node_type" {
@@ -67,29 +59,11 @@ variable "redis_node_type" {
   default     = "cache.r6g.large"
 }
 
-variable "docdb_instance_class" {
-  description = "DocumentDB instance class"
-  type        = string
-  default     = "db.r6g.large"
-}
-
-variable "mysql_instance_class" {
-  description = "MySQL instance class"
-  type        = string
-  default     = "db.r6g.large"
-}
-
 # COMPUTE VARIABLES
 variable "api_desired_count" {
   description = "Number of API replicas"
   type        = number
   default     = 3
-}
-
-variable "worker_desired_count" {
-  description = "Number of Worker replicas"
-  type        = number
-  default     = 2
 }
 
 variable "api_cpu" {
@@ -102,4 +76,25 @@ variable "api_memory" {
   description = "API memory in MB"
   type        = number
   default     = 2048
+}
+
+# SSL Certificate
+variable "certificate_arn" {
+  description = "ACM Certificate ARN for HTTPS"
+  type        = string
+}
+
+# API Keys (should be passed via environment or CI/CD)
+variable "openai_api_key" {
+  description = "OpenAI API Key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "anthropic_api_key" {
+  description = "Anthropic API Key"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """Email + calendar tools.
 
 `send_email` uses Resend when `RESEND_API_KEY` is set, with optional file
@@ -7,7 +10,6 @@ attachments (PDF, Excel). Falls back to `generated/email_log.jsonl` in dev.
 persists to `generated/calendar_events.json`.
 """
 
-from __future__ import annotations
 
 import asyncio
 import base64
@@ -29,12 +31,12 @@ def _markdown_to_html(text: str) -> str:
     """Convert markdown text to email-safe HTML with Quicksand font."""
     import re
     lines = text.split("\n")
-    html_parts: list[str] = []
+    html_parts: List[str] = []
     in_list = False
     list_type = ""
     in_table = False
-    table_rows: list[list[str]] = []
-    table_headers: list[str] = []
+    table_rows: List[List[str]] = []
+    table_headers: List[str] = []
     F = "font-family:'Quicksand','Segoe UI',sans-serif"
 
     def flush_table():
@@ -163,7 +165,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _resolve_attachment(file_path: str) -> dict | None:
+def _resolve_attachment(file_path: str) -> dict Optional:
     """Resolve a file path to a Resend attachment dict {filename, content (b64)}."""
     # Try relative to generated/ or absolute
     candidates = [
@@ -178,7 +180,7 @@ def _resolve_attachment(file_path: str) -> dict | None:
     return None
 
 
-async def _resend_send(to: str, subject: str, body: str, attachments: list[str] | None = None) -> dict:
+async def _resend_send(to: str, subject: str, body: str, attachments: List[str] Optional = None) -> dict:
     """Non-blocking Resend HTTP send with optional attachments."""
     import resend
 
@@ -312,7 +314,7 @@ async def calendar_event(action: str, payload: str) -> str:
     """Create or list calendar events. action='list' or 'create'. For create,
     payload is JSON: {title, start, end, description?, attendees?}."""
     CALENDAR_PATH.parent.mkdir(parents=True, exist_ok=True)
-    events: list[dict] = []
+    events: List[dict] = []
     if CALENDAR_PATH.exists():
         try:
             events = json.loads(CALENDAR_PATH.read_text(encoding="utf-8"))

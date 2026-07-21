@@ -1,3 +1,6 @@
+from typing import Optional, List, Dict, Any, Union, Callable, TypeVar, Tuple
+from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 """New tools for enhanced Mitsumi agents.
 
 customer_analytics — aggregate customer performance metrics
@@ -5,7 +8,6 @@ order_search      — search sales orders
 sales_forecast    — weighted pipeline forecast with trends
 """
 
-from __future__ import annotations
 
 import json
 
