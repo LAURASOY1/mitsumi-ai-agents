@@ -10,8 +10,8 @@ type AccentKey = "brand" | "accent" | "success" | "warning";
 
 type Props = {
   agentName: string;
-  departmentLabel: string;
-  accent: AccentKey;
+  departmentLabel?: string;
+  accent?: AccentKey;
 };
 
 const ACCENT_MAP: Record<AccentKey, { ring: string; pill: string; halo: string; chip: string }> = {
@@ -41,24 +41,40 @@ const ACCENT_MAP: Record<AccentKey, { ring: string; pill: string; halo: string; 
   },
 };
 
+// Default accent if none provided
+const DEFAULT_ACCENT: AccentKey = "brand";
+
 const AGENT_BLURBS: Record<string, string> = {
   sales: "A senior sales analyst that triages your pipeline, prices deals and drafts outreach.",
   marketing: "A growth marketer that pulls campaign performance and writes next-step copy.",
   finance: "An AR controller that reads invoices, aging and quietly nags slow payers.",
   ops: "An operations lead that watches tickets, shipments and stock positions in real time.",
+  support: "A support agent that handles customer queries and escalations.",
 };
 
-export function DepartmentAgentCard({ agentName, departmentLabel, accent }: Props) {
+const DEPARTMENT_ACCENTS: Record<string, AccentKey> = {
+  sales: "brand",
+  marketing: "accent",
+  finance: "success",
+  operations: "warning",
+  ops: "warning",
+};
+
+export function DepartmentAgentCard({ agentName, departmentLabel, accent: propAccent }: Props) {
   const [tools, setTools] = useState<AgentToolInfo[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Determine accent from department if not provided
+  const accent = propAccent || DEPARTMENT_ACCENTS[agentName] || DEFAULT_ACCENT;
+  const accentCls = ACCENT_MAP[accent] || ACCENT_MAP[DEFAULT_ACCENT];
 
   useEffect(() => {
     let alive = true;
     fetchAgentTools(agentName)
       .then((res) => {
         if (!alive) return;
-        setTools(res.tools);
+        setTools(res.tools || res || []);
         setErr(null);
       })
       .catch((e: Error) => {
@@ -70,7 +86,6 @@ export function DepartmentAgentCard({ agentName, departmentLabel, accent }: Prop
     };
   }, [agentName]);
 
-  // Close on ESC
   useEffect(() => {
     if (!modalOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -80,7 +95,7 @@ export function DepartmentAgentCard({ agentName, departmentLabel, accent }: Prop
     return () => window.removeEventListener("keydown", onKey);
   }, [modalOpen]);
 
-  const accentCls = ACCENT_MAP[accent];
+  const label = departmentLabel || agentName.charAt(0).toUpperCase() + agentName.slice(1);
   const blurb = AGENT_BLURBS[agentName] ?? "An AI agent with tools for this department.";
 
   return (
@@ -109,7 +124,7 @@ export function DepartmentAgentCard({ agentName, departmentLabel, accent }: Prop
               </span>
             </div>
             <h3 className="text-base md:text-lg font-display font-semibold text-slate-900 dark:text-white truncate">
-              {departmentLabel} Agent
+              {label} Agent
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{blurb}</p>
           </div>
@@ -148,7 +163,7 @@ export function DepartmentAgentCard({ agentName, departmentLabel, accent }: Prop
         createPortal(
           <AgentInfoModal
             agentName={agentName}
-            departmentLabel={departmentLabel}
+            departmentLabel={label}
             accent={accent}
             blurb={blurb}
             tools={tools}
@@ -178,7 +193,7 @@ function AgentInfoModal({
   err: string | null;
   onClose: () => void;
 }) {
-  const accentCls = ACCENT_MAP[accent];
+  const accentCls = ACCENT_MAP[accent] || ACCENT_MAP[DEFAULT_ACCENT];
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-up"
@@ -190,14 +205,12 @@ function AgentInfoModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Backdrop */}
       <div
         aria-hidden
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
         onClick={onClose}
         data-testid={`department-${agentName}-agent-modal-backdrop`}
       />
-      {/* Panel */}
       <div
         className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden"
         onClick={(e) => e.stopPropagation()}

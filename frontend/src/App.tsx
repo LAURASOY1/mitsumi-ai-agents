@@ -68,13 +68,11 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Fullscreen, auth-protected agent pages (no dashboard shell) */}
       <Route element={<RequireAuth />}>
         <Route path="/agent/:name" element={<AgentLanding />} />
         <Route path="/agent/:name/c/:chatId" element={<AgentView />} />
       </Route>
 
-      {/* Everything else lives inside the dashboard shell */}
       <Route element={<RequireAuthLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/department/:name" element={<DepartmentRoute />} />
@@ -120,20 +118,11 @@ function AdminRoute({ children }: { children: React.ReactElement }) {
 }
 
 function DepartmentRoute() {
-  const { name } = useParams();
+  const { name } = useParams<{ name: string }>();
+  console.log("DepartmentRoute - name:", name);
   return <DepartmentPage departmentKey={name} />;
 }
 
-/**
- * AgentLanding resolves the right chat for the department:
- *  1. If the agent has existing chats, navigate to the most recent one.
- *  2. Otherwise create a single chat and navigate to it.
- *
- * Uses a ref guard so React 18 StrictMode double-invokes don't create two
- * chats on first mount. Prior version blindly created a chat every visit,
- * which is why a new empty chat was spawned each time a department was
- * clicked.
- */
 function AgentLanding() {
   const navigate = useNavigate();
   const params = useParams();
@@ -196,4 +185,3 @@ function RequireAuthLayout() {
     </AppShell>
   );
 }
-
